@@ -2,8 +2,6 @@
 
 A lightweight dependency-free helper for writing golang tests.
 
-[![codecov](https://codecov.io/gh/pjbgf/should/branch/master/graph/badge.svg)](https://codecov.io/gh/pjbgf/should)
-[![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=pjbgf/should)](https://dependabot.com)
 [![GoReport](https://goreportcard.com/badge/github.com/pjbgf/should)](https://goreportcard.com/report/github.com/pjbgf/should)
 [![GoDoc](https://godoc.org/github.com/pjbgf/should?status.svg)](https://godoc.org/github.com/pjbgf/should)
 ![build](https://github.com/pjbgf/should/workflows/go/badge.svg)
@@ -37,7 +35,7 @@ func TestGetArchitectures(t *testing.T) {
 
 		should.BeEqual(expected, actual, assumption)
 	}
-
+    
     assertThat("should return empty archs for no target architectures",
 		[]string{},
 		[]specs.Arch{})
