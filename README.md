@@ -1,11 +1,11 @@
-## should
+## go-test
 
 A lightweight dependency-free helper for writing golang tests.
 
-[![codecov](https://codecov.io/gh/pjbgf/should/branch/master/graph/badge.svg)](https://codecov.io/gh/pjbgf/should)
-[![GoReport](https://goreportcard.com/badge/github.com/pjbgf/should)](https://goreportcard.com/report/github.com/pjbgf/should)
-[![GoDoc](https://godoc.org/github.com/pjbgf/should?status.svg)](https://godoc.org/github.com/pjbgf/should)
-![build](https://github.com/pjbgf/should/workflows/go/badge.svg)
+[![codecov](https://codecov.io/gh/pjbgf/go-test/branch/master/graph/badge.svg)](https://codecov.io/gh/pjbgf/go-test)
+[![GoReport](https://goreportcard.com/badge/github.com/pjbgf/go-test)](https://goreportcard.com/report/github.com/pjbgf/go-test)
+[![GoDoc](https://godoc.org/github.com/pjbgf/go-test?status.svg)](https://godoc.org/github.com/pjbgf/go-test)
+![build](https://github.com/pjbgf/go-test/workflows/go/badge.svg)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](http://choosealicense.com/licenses/mit/)
 
 
@@ -29,6 +29,8 @@ func getArchitectures(targetArchitectures []string) []specs.Arch {
 
 Test Code
 ```golang
+import "github.com/pjbgf/go-test"
+
 func TestGetArchitectures(t *testing.T) {
 	assertThat := func(assumption string, targetArchitectures []string, expected []specs.Arch) {
 		should := should.New(t)
