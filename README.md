@@ -8,9 +8,9 @@ A lightweight dependency-free helper for writing golang tests.
 ![build](https://github.com/pjbgf/go-test/workflows/go/badge.svg)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](http://choosealicense.com/licenses/mit/)
 
+No bells and whistles, just a very simple test helper that won't bring extra dependencies to your projects.
 
-
-Sample Code
+### Sample Code
 ```golang
 package calc
 
@@ -19,7 +19,7 @@ func Sum(value1, value2 int) int {
 }
 ```
 
-Test for Sample Code
+### Testing the Sample Code
 ```golang
 package calc
 
@@ -42,3 +42,8 @@ func TestSum(t *testing.T) {
 	assertThat("should return 50 for 15 and 30", 15, 35, 50)
 }
 ```
+
+
+## License
+
+This application is licensed under the MIT License, you may obtain a copy of it [here](LICENSE).
