@@ -14,9 +14,8 @@ type Should struct {
 
 type testingT interface {
 	Helper()
-	Logf(format string, args ...interface{})
+	Log(args ...interface{})
 	Error(args ...interface{})
-	Errorf(format string, args ...interface{})
 }
 
 // New initialises a new Should instance.
@@ -28,9 +27,8 @@ func New(t testingT) *Should {
 func (s *Should) BeNil(value interface{}, assumption string) {
 	if !isNil(value) {
 		s.t.Helper()
-		s.t.Logf("==== %s ====", assumption)
-		v := getNotNilString(value)
-		s.t.Errorf("value was expected to be nil, but was %s instead", v)
+		s.t.Log(fmt.Sprintf("==== %s ====", assumption))
+		s.t.Error(fmt.Sprintf("value was expected to be nil, but was %s instead", getNotNilString(value)))
 	}
 }
 
@@ -38,7 +36,7 @@ func (s *Should) BeNil(value interface{}, assumption string) {
 func (s *Should) BeNotNil(value interface{}, assumption string) {
 	if isNil(value) {
 		s.t.Helper()
-		s.t.Logf("==== %s ====", assumption)
+		s.t.Log(fmt.Sprintf("==== %s ====", assumption))
 		s.t.Error("value was expected to not be nil, but it was not")
 	}
 }
@@ -47,7 +45,7 @@ func (s *Should) BeNotNil(value interface{}, assumption string) {
 func (s *Should) Error(err error, assumption string) {
 	if isNil(err) {
 		s.t.Helper()
-		s.t.Logf("==== %s ====", assumption)
+		s.t.Log(fmt.Sprintf("==== %s ====", assumption))
 		s.t.Error("error was expected, but did not happen")
 	}
 }
@@ -56,7 +54,7 @@ func (s *Should) Error(err error, assumption string) {
 func (s *Should) NotError(err error, assumption string) {
 	if !isNil(err) {
 		s.t.Helper()
-		s.t.Logf("==== %s ====", assumption)
+		s.t.Log(fmt.Sprintf("==== %s ====", assumption))
 		s.t.Error("error was not expected, but did happen")
 	}
 }
@@ -65,8 +63,8 @@ func (s *Should) NotError(err error, assumption string) {
 func (s *Should) BeEqual(expected, actual interface{}, assumption string) {
 	if !reflect.DeepEqual(expected, actual) {
 		s.t.Helper()
-		s.t.Logf("==== %s ====", assumption)
-		s.t.Errorf("expected '%s' but got '%s' instead", escape(expected), escape(actual))
+		s.t.Log(fmt.Sprintf("==== %s ====", assumption))
+		s.t.Error(fmt.Sprintf("expected '%s' but got '%s' instead", escape(expected), escape(actual)))
 	}
 }
 
@@ -74,8 +72,8 @@ func (s *Should) BeEqual(expected, actual interface{}, assumption string) {
 func (s *Should) BeNotEqual(expected, actual interface{}, assumption string) {
 	if reflect.DeepEqual(expected, actual) {
 		s.t.Helper()
-		s.t.Logf("==== %s ====", assumption)
-		s.t.Errorf("expected '%s' not to be equal to '%s', but they were", escape(expected), escape(actual))
+		s.t.Log(fmt.Sprintf("==== %s ====", assumption))
+		s.t.Error(fmt.Sprintf("expected '%s' not to be equal to '%s', but they were", escape(expected), escape(actual)))
 	}
 }
 
@@ -83,7 +81,7 @@ func (s *Should) BeNotEqual(expected, actual interface{}, assumption string) {
 func (s *Should) BeTrue(value bool, assumption string) {
 	if !value {
 		s.t.Helper()
-		s.t.Logf("==== %s ====", assumption)
+		s.t.Log(fmt.Sprintf("==== %s ====", assumption))
 		s.t.Error("value was expected to be true, but was false instead")
 	}
 }
@@ -92,7 +90,7 @@ func (s *Should) BeTrue(value bool, assumption string) {
 func (s *Should) BeFalse(value bool, assumption string) {
 	if value {
 		s.t.Helper()
-		s.t.Logf("==== %s ====", assumption)
+		s.t.Log(fmt.Sprintf("==== %s ====", assumption))
 		s.t.Error("value was expected to be false, but was true instead")
 	}
 }
@@ -104,8 +102,8 @@ func (s *Should) HaveSameType(expected, actual interface{}, assumption string) {
 
 	if expectedType != actualType {
 		s.t.Helper()
-		s.t.Logf("==== %s ====", assumption)
-		s.t.Errorf("types expected to be same, but were '%s' and '%s'", expectedType, actualType)
+		s.t.Log(fmt.Sprintf("==== %s ====", assumption))
+		s.t.Error(fmt.Sprintf("types expected to be same, but were '%s' and '%s'", expectedType, actualType))
 	}
 }
 
