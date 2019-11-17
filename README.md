@@ -29,7 +29,7 @@ func getArchitectures(targetArchitectures []string) []specs.Arch {
 
 Test Code
 ```golang
-import "github.com/pjbgf/go-test"
+import "github.com/pjbgf/go-test/should"
 
 func TestGetArchitectures(t *testing.T) {
 	assertThat := func(assumption string, targetArchitectures []string, expected []specs.Arch) {
