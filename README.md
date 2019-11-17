@@ -1,52 +1,44 @@
-## should
+## go-test
 
 A lightweight dependency-free helper for writing golang tests.
 
-[![GoReport](https://goreportcard.com/badge/github.com/pjbgf/should)](https://goreportcard.com/report/github.com/pjbgf/should)
-[![GoDoc](https://godoc.org/github.com/pjbgf/should?status.svg)](https://godoc.org/github.com/pjbgf/should)
-![build](https://github.com/pjbgf/should/workflows/go/badge.svg)
+[![codecov](https://codecov.io/gh/pjbgf/go-test/branch/master/graph/badge.svg)](https://codecov.io/gh/pjbgf/go-test)
+[![GoReport](https://goreportcard.com/badge/github.com/pjbgf/go-test)](https://goreportcard.com/report/github.com/pjbgf/go-test)
+[![GoDoc](https://godoc.org/github.com/pjbgf/go-test?status.svg)](https://godoc.org/github.com/pjbgf/go-test)
+![build](https://github.com/pjbgf/go-test/workflows/go/badge.svg)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](http://choosealicense.com/licenses/mit/)
 
 
 
-Code to be tested
+Sample Code
 ```golang
-func getArchitectures(targetArchitectures []string) []specs.Arch {
-	arches := make([]specs.Arch, 0, 20)
-	for _, arch := range targetArchitectures {
-		switch arch {
-		case "amd64":
-			arches = append(arches, specs.ArchX86_64, specs.ArchX86, specs.ArchX32)
-		case "arm64":
-			arches = append(arches, specs.ArchARM, specs.ArchAARCH64)
-		}
-	}
+package calc
 
-	return arches
+func Sum(value1, value2 int) int {
+	return value1 + value2
 }
 ```
 
-Test Code
+Test for Sample Code
 ```golang
-func TestGetArchitectures(t *testing.T) {
-	assertThat := func(assumption string, targetArchitectures []string, expected []specs.Arch) {
+package calc
+
+import (
+	"testing"
+
+	"github.com/pjbgf/go-test/should"
+)
+
+func TestSum(t *testing.T) {
+	assertThat := func(assumption string, value1, value2, expected int) {
 		should := should.New(t)
-		actual := getArchitectures(targetArchitectures)
+
+		actual := Sum(value1, value2)
 
 		should.BeEqual(expected, actual, assumption)
 	}
-    
-    assertThat("should return empty archs for no target architectures",
-		[]string{},
-		[]specs.Arch{})
-	assertThat("should support amd64",
-		[]string{"amd64"},
-		[]specs.Arch{specs.ArchX86_64, specs.ArchX86, specs.ArchX32})
-	assertThat("should support arm64",
-		[]string{"arm64"},
-		[]specs.Arch{specs.ArchARM, specs.ArchAARCH64})
-	assertThat("should combine multiple architectures",
-		[]string{"amd64", "arm64"},
-		[]specs.Arch{specs.ArchX86_64, specs.ArchX86, specs.ArchX32, specs.ArchARM, specs.ArchAARCH64})
+
+	assertThat("should return 13 for 4 and 9", 4, 9, 13)
+	assertThat("should return 50 for 15 and 30", 15, 35, 50)
 }
 ```

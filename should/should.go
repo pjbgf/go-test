@@ -2,52 +2,59 @@
 package should
 
 import (
+	"fmt"
 	"reflect"
-	"testing"
+	"strings"
 )
 
 // Should define easy to use methods for testing go applications.
 type Should struct {
-	t *testing.T
+	t testingT
+}
+
+type testingT interface {
+	Helper()
+	Log(args ...interface{})
+	Error(args ...interface{})
 }
 
 // New initialises a new Should instance.
-func New(t *testing.T) *Should {
+func New(t testingT) *Should {
 	return &Should{t}
 }
 
 // BeNil fails the test if value is not nil.
 func (s *Should) BeNil(value interface{}, assumption string) {
-	if value != nil {
+	if !isNil(value) {
 		s.t.Helper()
-		s.t.Log(assumption)
-		s.t.Errorf("value was expected to be nil, but was '%s' instead", value)
+		s.t.Log(fmt.Sprintf("==== %s ====", assumption))
+		s.t.Error(fmt.Sprintf("value was expected to be nil, but was %s instead", getNotNilString(value)))
 	}
 }
 
 // BeNotNil fails the test if value is nil.
 func (s *Should) BeNotNil(value interface{}, assumption string) {
-	if value == nil {
+	if isNil(value) {
 		s.t.Helper()
-		s.t.Log(assumption)
-		s.t.Error("value was not expected to be nil, but it was")
+		s.t.Log(fmt.Sprintf("==== %s ====", assumption))
+		s.t.Error("value was expected to not be nil, but it was not")
 	}
 }
 
 // Error fails the test if err is nil.
 func (s *Should) Error(err error, assumption string) {
-	if err == nil {
+	if isNil(err) {
 		s.t.Helper()
-		s.t.Log(assumption)
+		s.t.Log(fmt.Sprintf("==== %s ====", assumption))
 		s.t.Error("error was expected, but did not happen")
 	}
 }
 
 // NotError fails the test if err is not nil.
 func (s *Should) NotError(err error, assumption string) {
-	if err != nil {
+	if !isNil(err) {
 		s.t.Helper()
-		s.t.Log(assumption)
+		s.t.Log(fmt.Sprintf("==== %s ====", assumption))
 		s.t.Error("error was not expected, but did happen")
 	}
 }
@@ -56,8 +63,8 @@ func (s *Should) NotError(err error, assumption string) {
 func (s *Should) BeEqual(expected, actual interface{}, assumption string) {
 	if !reflect.DeepEqual(expected, actual) {
 		s.t.Helper()
-		s.t.Log(assumption)
-		s.t.Errorf("expected '%s' but got '%s' instead", expected, actual)
+		s.t.Log(fmt.Sprintf("==== %s ====", assumption))
+		s.t.Error(fmt.Sprintf("expected '%s' but got '%s' instead", escape(expected), escape(actual)))
 	}
 }
 
@@ -65,8 +72,8 @@ func (s *Should) BeEqual(expected, actual interface{}, assumption string) {
 func (s *Should) BeNotEqual(expected, actual interface{}, assumption string) {
 	if reflect.DeepEqual(expected, actual) {
 		s.t.Helper()
-		s.t.Log(assumption)
-		s.t.Errorf("expected '%s' not to be equal to '%s', but they were", expected, actual)
+		s.t.Log(fmt.Sprintf("==== %s ====", assumption))
+		s.t.Error(fmt.Sprintf("expected '%s' not to be equal to '%s', but they were", escape(expected), escape(actual)))
 	}
 }
 
@@ -74,7 +81,7 @@ func (s *Should) BeNotEqual(expected, actual interface{}, assumption string) {
 func (s *Should) BeTrue(value bool, assumption string) {
 	if !value {
 		s.t.Helper()
-		s.t.Log(assumption)
+		s.t.Log(fmt.Sprintf("==== %s ====", assumption))
 		s.t.Error("value was expected to be true, but was false instead")
 	}
 }
@@ -83,7 +90,7 @@ func (s *Should) BeTrue(value bool, assumption string) {
 func (s *Should) BeFalse(value bool, assumption string) {
 	if value {
 		s.t.Helper()
-		s.t.Log(assumption)
+		s.t.Log(fmt.Sprintf("==== %s ====", assumption))
 		s.t.Error("value was expected to be false, but was true instead")
 	}
 }
@@ -95,7 +102,43 @@ func (s *Should) HaveSameType(expected, actual interface{}, assumption string) {
 
 	if expectedType != actualType {
 		s.t.Helper()
-		s.t.Log(assumption)
-		s.t.Errorf("expected type was '%s' but got '%s' instead", expectedType, actualType)
+		s.t.Log(fmt.Sprintf("==== %s ====", assumption))
+		s.t.Error(fmt.Sprintf("types expected to be same, but were '%s' and '%s'", expectedType, actualType))
 	}
+}
+
+func escape(value interface{}) interface{} {
+	tmpValue, ok := value.(string)
+	if ok {
+		tmpValue = strings.ReplaceAll(tmpValue, "\n", "\\n")
+		return strings.ReplaceAll(tmpValue, "\t", "\\t")
+	}
+
+	return value
+}
+
+func isNil(value interface{}) bool {
+	if value == nil {
+		return true
+	}
+
+	t := reflect.ValueOf(value)
+	switch t.Kind() {
+	case reflect.Ptr, reflect.Slice, reflect.Map,
+		reflect.Func, reflect.Chan:
+		return t.IsNil()
+	}
+
+	return false
+}
+
+func getNotNilString(value interface{}) string {
+	t := reflect.ValueOf(value)
+	switch t.Kind() {
+	case reflect.Ptr, reflect.Slice, reflect.Map,
+		reflect.Func, reflect.Chan:
+		return fmt.Sprintf("an initialised value of type %s", t.Type())
+	}
+
+	return fmt.Sprintf("'%s'", value)
 }
