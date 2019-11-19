@@ -7,9 +7,9 @@ import (
 )
 
 type testingStub struct {
+	hasFailed    bool
 	helperCalled bool
 	logMessage   string
-	errorMessage string
 }
 
 func (t *testingStub) Helper() {
@@ -24,48 +24,37 @@ func (t *testingStub) Log(args ...interface{}) {
 	t.logMessage = fmt.Sprint(args...)
 }
 
-func (t *testingStub) Error(args ...interface{}) {
-	t.errorMessage = fmt.Sprint(args...)
+func (t *testingStub) Fail() {
+	t.hasFailed = true
 }
 
 func TestBeNil(t *testing.T) {
 	t.Run("scenarios that must fail tests", func(t *testing.T) {
-		assertThat := func(assumption string, value interface{}, expectedErrorMessage string) {
+		assertThat := func(assumption string, value interface{}) {
 			stub := testingStub{}
 			should := New(&stub)
-			expectedLogMessage := fmt.Sprintf("==== %s ====", assumption)
+			expectedLogMessage := fmt.Sprintf("\nassumption: [ %s ]\n    should: %s \n  expected: %s\n    actual: '%s'",
+				assumption, "BeNil", "nil", value)
 
 			should.BeNil(value, assumption)
 
+			if !stub.hasFailed {
+				t.Error("test was expected to fail but did not")
+			}
 			if !stub.WasHelperCalled() {
 				t.Errorf("Helper() call was expected but did not happen")
 			}
 			if expectedLogMessage != stub.logMessage {
 				t.Errorf("wanted '%s' got '%s'", expectedLogMessage, stub.logMessage)
 			}
-			if expectedErrorMessage != stub.errorMessage {
-				t.Errorf("wanted '%s' got '%s'", expectedErrorMessage, stub.errorMessage)
-			}
 		}
 
-		assertThat("should fail for non empty string",
-			"test",
-			"value was expected to be nil, but was 'test' instead")
-		assertThat("should fail for empty string",
-			"",
-			"value was expected to be nil, but was '' instead")
-		assertThat("should fail for non-nil func()",
-			func() {},
-			"value was expected to be nil, but was an initialised value of type func() instead")
-		assertThat("should fail for non-nil chan int",
-			make(chan int),
-			"value was expected to be nil, but was an initialised value of type chan int instead")
-		assertThat("should fail for non-nil map[int]int",
-			make(map[int]int),
-			"value was expected to be nil, but was an initialised value of type map[int]int instead")
-		assertThat("should fail for non-nil []uint8",
-			make([]uint8, 0),
-			"value was expected to be nil, but was an initialised value of type []uint8 instead")
+		assertThat("should fail for non empty string", "test")
+		assertThat("should fail for empty string", "")
+		assertThat("should fail for non-nil func()", func() {})
+		assertThat("should fail for non-nil chan int", make(chan int))
+		assertThat("should fail for non-nil map[int]int", make(map[int]int))
+		assertThat("should fail for non-nil []uint8", make([]uint8, 0))
 	})
 
 	t.Run("scenarios that must not fail tests", func(t *testing.T) {
@@ -75,14 +64,14 @@ func TestBeNil(t *testing.T) {
 
 			should.BeNil(value, assumption)
 
+			if stub.hasFailed {
+				t.Error("test was expected to not fail but it did")
+			}
 			if stub.WasHelperCalled() {
 				t.Error("Helper() call was not expected")
 			}
 			if stub.logMessage != "" {
 				t.Errorf("wanted '%s' got '%s'", "", stub.logMessage)
-			}
-			if stub.errorMessage != "" {
-				t.Errorf("wanted '%s' got '%s'", "", stub.errorMessage)
 			}
 		}
 
@@ -101,19 +90,19 @@ func TestNotBeNil(t *testing.T) {
 		assertThat := func(assumption string, value interface{}) {
 			stub := testingStub{}
 			should := New(&stub)
-			expectedLogMessage := fmt.Sprintf("==== %s ====", assumption)
-			expectedErrorMessage := "value was expected to not be nil, but it was not"
+			expectedLogMessage := fmt.Sprintf("\nassumption: [ %s ]\n    should: %s \n  expected: %s\n    actual: '%s'",
+				assumption, "BeNotNil", "!= nil", value)
 
 			should.BeNotNil(value, assumption)
 
+			if !stub.hasFailed {
+				t.Error("test was expected to fail but did not")
+			}
 			if !stub.WasHelperCalled() {
 				t.Errorf("Helper() call was expected but did not happen")
 			}
 			if expectedLogMessage != stub.logMessage {
 				t.Errorf("wanted '%s' got '%s'", expectedLogMessage, stub.logMessage)
-			}
-			if expectedErrorMessage != stub.errorMessage {
-				t.Errorf("wanted '%s' got '%s'", expectedErrorMessage, stub.errorMessage)
 			}
 		}
 
@@ -133,14 +122,14 @@ func TestNotBeNil(t *testing.T) {
 
 			should.BeNotNil(value, assumption)
 
+			if stub.hasFailed {
+				t.Error("test was expected to not fail but it did")
+			}
 			if stub.WasHelperCalled() {
 				t.Error("Helper() call was not expected")
 			}
 			if stub.logMessage != "" {
 				t.Errorf("wanted '%s' got '%s'", "", stub.logMessage)
-			}
-			if stub.errorMessage != "" {
-				t.Errorf("wanted '%s' got '%s'", "", stub.errorMessage)
 			}
 		}
 
@@ -158,19 +147,19 @@ func TestError(t *testing.T) {
 		assertThat := func(assumption string, err error) {
 			stub := testingStub{}
 			should := New(&stub)
-			expectedLogMessage := fmt.Sprintf("==== %s ====", assumption)
-			expectedErrorMessage := "error was expected, but did not happen"
+			expectedLogMessage := fmt.Sprintf("\nassumption: [ %s ]\n    should: %s \n  expected: %s\n    actual: '%s'",
+				assumption, "Error", "!= nil", err)
 
 			should.Error(err, assumption)
 
+			if !stub.hasFailed {
+				t.Error("test was expected to fail but did not")
+			}
 			if !stub.WasHelperCalled() {
 				t.Errorf("Helper() call was expected but did not happen")
 			}
 			if expectedLogMessage != stub.logMessage {
 				t.Errorf("wanted '%s' got '%s'", expectedLogMessage, stub.logMessage)
-			}
-			if expectedErrorMessage != stub.errorMessage {
-				t.Errorf("wanted '%s' got '%s'", expectedErrorMessage, stub.errorMessage)
 			}
 		}
 
@@ -184,14 +173,14 @@ func TestError(t *testing.T) {
 
 			should.Error(err, assumption)
 
+			if stub.hasFailed {
+				t.Error("test was expected to not fail but it did")
+			}
 			if stub.WasHelperCalled() {
 				t.Error("Helper() call was not expected")
 			}
 			if stub.logMessage != "" {
 				t.Errorf("wanted '%s' got '%s'", "", stub.logMessage)
-			}
-			if stub.errorMessage != "" {
-				t.Errorf("wanted '%s' got '%s'", "", stub.errorMessage)
 			}
 		}
 
@@ -205,19 +194,19 @@ func TestNotError(t *testing.T) {
 		assertThat := func(assumption string, err error) {
 			stub := testingStub{}
 			should := New(&stub)
-			expectedLogMessage := fmt.Sprintf("==== %s ====", assumption)
-			expectedErrorMessage := "error was not expected, but did happen"
+			expectedLogMessage := fmt.Sprintf("\nassumption: [ %s ]\n    should: %s \n  expected: %s\n    actual: '%s'",
+				assumption, "NotError", "nil", err)
 
 			should.NotError(err, assumption)
 
+			if !stub.hasFailed {
+				t.Error("test was expected to fail but did not")
+			}
 			if !stub.WasHelperCalled() {
 				t.Errorf("Helper() call was expected but did not happen")
 			}
 			if expectedLogMessage != stub.logMessage {
 				t.Errorf("wanted '%s' got '%s'", expectedLogMessage, stub.logMessage)
-			}
-			if expectedErrorMessage != stub.errorMessage {
-				t.Errorf("wanted '%s' got '%s'", expectedErrorMessage, stub.errorMessage)
 			}
 		}
 
@@ -232,14 +221,14 @@ func TestNotError(t *testing.T) {
 
 			should.NotError(err, assumption)
 
+			if stub.hasFailed {
+				t.Error("test was expected to not fail but it did")
+			}
 			if stub.WasHelperCalled() {
 				t.Error("Helper() call was not expected")
 			}
 			if stub.logMessage != "" {
 				t.Errorf("wanted '%s' got '%s'", "", stub.logMessage)
-			}
-			if stub.errorMessage != "" {
-				t.Errorf("wanted '%s' got '%s'", "", stub.errorMessage)
 			}
 		}
 
@@ -249,36 +238,33 @@ func TestNotError(t *testing.T) {
 
 func TestBeEqual(t *testing.T) {
 	t.Run("scenarios that must fail tests", func(t *testing.T) {
-		assertThat := func(assumption string, expected, actual interface{}, expectedErrorMessage string) {
+		assertThat := func(assumption string, expected, actual interface{}) {
 			stub := testingStub{}
 			should := New(&stub)
-			expectedLogMessage := fmt.Sprintf("==== %s ====", assumption)
+			expectedLogMessage := fmt.Sprintf("\nassumption: [ %s ]\n    should: %s \n  expected: '%s'\n    actual: '%s'",
+				assumption, "BeEqual", escape(expected), escape(actual))
 
 			should.BeEqual(expected, actual, assumption)
 
+			if !stub.hasFailed {
+				t.Error("test was expected to fail but did not")
+			}
 			if !stub.WasHelperCalled() {
 				t.Error("Helper() call was expected but did not happen")
 			}
 			if expectedLogMessage != stub.logMessage {
 				t.Errorf("wanted '%s' got '%s'", expectedLogMessage, stub.logMessage)
 			}
-			if expectedErrorMessage != stub.errorMessage {
-				t.Errorf("wanted '%s' got '%s'", expectedErrorMessage, stub.errorMessage)
-			}
 		}
 
 		assertThat("should fail diff strings and escape errors with line breaks",
-			"ab\nc", "cde\n",
-			"expected 'ab\\nc' but got 'cde\\n' instead")
+			"ab\nc", "cde\n")
 		assertThat("should fail diff strings and escape errors with tabs",
-			"ab\tc", "cde\t",
-			"expected 'ab\\tc' but got 'cde\\t' instead")
+			"ab\tc", "cde\t")
 		assertThat("should fail for true and \"true\"",
-			true, "true",
-			"expected '%!s(bool=true)' but got 'true' instead")
+			true, "true")
 		assertThat("should fail for (int32=6) and (int16=6)",
-			int32(6), int16(6),
-			"expected '%!s(int32=6)' but got '%!s(int16=6)' instead")
+			int32(6), int16(6))
 	})
 
 	t.Run("scenarios that must not fail tests", func(t *testing.T) {
@@ -288,18 +274,20 @@ func TestBeEqual(t *testing.T) {
 
 			should.BeEqual(expected, actual, assumption)
 
+			if stub.hasFailed {
+				t.Error("test was expected to not fail but it did")
+			}
 			if stub.WasHelperCalled() {
 				t.Error("Helper() call was not expected")
 			}
 			if stub.logMessage != "" {
 				t.Errorf("wanted '%s' got '%s'", "", stub.logMessage)
 			}
-			if stub.errorMessage != "" {
-				t.Errorf("wanted '%s' got '%s'", "", stub.errorMessage)
-			}
 		}
 
 		assertThat("should not fail tests for equal strings", "abc", "abc")
+		assertThat("should not fail tests for equal strings", "abc\n", `abc
+`)
 		assertThat("should not fail tests for equal boolean", true, true)
 		assertThat("should not fail tests for equal []byte and []uint8", []byte{2}, []uint8{2})
 	})
@@ -307,30 +295,27 @@ func TestBeEqual(t *testing.T) {
 
 func TestBeNotEqual(t *testing.T) {
 	t.Run("scenarios that must fail tests", func(t *testing.T) {
-		assertThat := func(assumption string, expected, actual interface{}, expectedErrorMessage string) {
+		assertThat := func(assumption string, expected, actual interface{}) {
 			stub := testingStub{}
 			should := New(&stub)
-			expectedLogMessage := fmt.Sprintf("==== %s ====", assumption)
+			expectedLogMessage := fmt.Sprintf("\nassumption: [ %s ]\n    should: %s \n  expected: '%s'\n    actual: '%s'",
+				assumption, "BeNotEqual", escape(expected), escape(actual))
 
 			should.BeNotEqual(expected, actual, assumption)
 
+			if !stub.hasFailed {
+				t.Error("test was expected to fail but did not")
+			}
 			if !stub.WasHelperCalled() {
 				t.Error("Helper() call was expected but did not happen")
 			}
 			if expectedLogMessage != stub.logMessage {
 				t.Errorf("wanted '%s' got '%s'", expectedLogMessage, stub.logMessage)
 			}
-			if expectedErrorMessage != stub.errorMessage {
-				t.Errorf("wanted '%s' got '%s'", expectedErrorMessage, stub.errorMessage)
-			}
 		}
 
-		assertThat("should fail tests for equal strings",
-			"abc", "abc",
-			"expected 'abc' not to be equal to 'abc', but they were")
-		assertThat("should fail tests for equal boolean",
-			true, true,
-			"expected '%!s(bool=true)' not to be equal to '%!s(bool=true)', but they were")
+		assertThat("should fail tests for equal strings", "abc", "abc")
+		assertThat("should fail tests for equal boolean", true, true)
 	})
 
 	t.Run("scenarios that must not fail tests", func(t *testing.T) {
@@ -340,14 +325,14 @@ func TestBeNotEqual(t *testing.T) {
 
 			should.BeNotEqual(expected, actual, assumption)
 
+			if stub.hasFailed {
+				t.Error("test was expected to not fail but it did")
+			}
 			if stub.WasHelperCalled() {
 				t.Error("Helper() call was not expected")
 			}
 			if stub.logMessage != "" {
 				t.Errorf("wanted '%s' got '%s'", "", stub.logMessage)
-			}
-			if stub.errorMessage != "" {
-				t.Errorf("wanted '%s' got '%s'", "", stub.errorMessage)
 			}
 		}
 
@@ -361,19 +346,19 @@ func TestBeTrue(t *testing.T) {
 		assertThat := func(assumption string, value bool) {
 			stub := testingStub{}
 			should := New(&stub)
-			expectedLogMessage := fmt.Sprintf("==== %s ====", assumption)
-			expectedErrorMessage := "value was expected to be true, but was false instead"
+			expectedLogMessage := fmt.Sprintf("\nassumption: [ %s ]\n    should: %s \n  expected: %s\n    actual: %t",
+				assumption, "BeTrue", "true", value)
 
 			should.BeTrue(value, assumption)
 
+			if !stub.hasFailed {
+				t.Error("test was expected to fail but did not")
+			}
 			if !stub.WasHelperCalled() {
 				t.Errorf("Helper() call was expected but did not happen")
 			}
 			if expectedLogMessage != stub.logMessage {
 				t.Errorf("wanted '%s' got '%s'", expectedLogMessage, stub.logMessage)
-			}
-			if expectedErrorMessage != stub.errorMessage {
-				t.Errorf("wanted '%s' got '%s'", expectedErrorMessage, stub.errorMessage)
 			}
 		}
 
@@ -387,14 +372,14 @@ func TestBeTrue(t *testing.T) {
 
 			should.BeTrue(value, assumption)
 
+			if stub.hasFailed {
+				t.Error("test was expected to not fail but it did")
+			}
 			if stub.WasHelperCalled() {
 				t.Error("Helper() call was not expected")
 			}
 			if stub.logMessage != "" {
 				t.Errorf("wanted '%s' got '%s'", "", stub.logMessage)
-			}
-			if stub.errorMessage != "" {
-				t.Errorf("wanted '%s' got '%s'", "", stub.errorMessage)
 			}
 		}
 
@@ -407,19 +392,19 @@ func TestBeFalse(t *testing.T) {
 		assertThat := func(assumption string, value bool) {
 			stub := testingStub{}
 			should := New(&stub)
-			expectedLogMessage := fmt.Sprintf("==== %s ====", assumption)
-			expectedErrorMessage := "value was expected to be false, but was true instead"
+			expectedLogMessage := fmt.Sprintf("\nassumption: [ %s ]\n    should: %s \n  expected: %s\n    actual: %t",
+				assumption, "BeFalse", "false", value)
 
 			should.BeFalse(value, assumption)
 
+			if !stub.hasFailed {
+				t.Error("test was expected to fail but did not")
+			}
 			if !stub.WasHelperCalled() {
 				t.Errorf("Helper() call was expected but did not happen")
 			}
 			if expectedLogMessage != stub.logMessage {
 				t.Errorf("wanted '%s' got '%s'", expectedLogMessage, stub.logMessage)
-			}
-			if expectedErrorMessage != stub.errorMessage {
-				t.Errorf("wanted '%s' got '%s'", expectedErrorMessage, stub.errorMessage)
 			}
 		}
 
@@ -433,14 +418,14 @@ func TestBeFalse(t *testing.T) {
 
 			should.BeFalse(value, assumption)
 
+			if stub.hasFailed {
+				t.Error("test was expected to not fail but it did")
+			}
 			if stub.WasHelperCalled() {
 				t.Error("Helper() call was not expected")
 			}
 			if stub.logMessage != "" {
 				t.Errorf("wanted '%s' got '%s'", "", stub.logMessage)
-			}
-			if stub.errorMessage != "" {
-				t.Errorf("wanted '%s' got '%s'", "", stub.errorMessage)
 			}
 		}
 
@@ -450,26 +435,27 @@ func TestBeFalse(t *testing.T) {
 
 func TestHaveSameType(t *testing.T) {
 	t.Run("scenarios that must fail tests", func(t *testing.T) {
-		assertThat := func(assumption string, value1, value2 interface{}, expectedErrorMessage string) {
+		assertThat := func(assumption string, value1, value2 interface{}, type1, type2 string) {
 			stub := testingStub{}
 			should := New(&stub)
-			expectedLogMessage := fmt.Sprintf("==== %s ====", assumption)
+			expectedLogMessage := fmt.Sprintf("\nassumption: [ %s ]\n    should: %s \n  expected: %s\n    actual: %s",
+				assumption, "HaveSameType", type1, type2)
 
 			should.HaveSameType(value1, value2, assumption)
 
+			if !stub.hasFailed {
+				t.Error("test was expected to fail but did not")
+			}
 			if !stub.WasHelperCalled() {
 				t.Errorf("Helper() call was expected but did not happen")
 			}
 			if expectedLogMessage != stub.logMessage {
 				t.Errorf("wanted '%s' got '%s'", expectedLogMessage, stub.logMessage)
 			}
-			if expectedErrorMessage != stub.errorMessage {
-				t.Errorf("wanted '%s' got '%s'", expectedErrorMessage, stub.errorMessage)
-			}
 		}
 
-		assertThat("should fail for true and 'true'", true, "true", "types expected to be same, but were 'bool' and 'string'")
-		assertThat("should fail for \"a\" and ''", "a", 'a', "types expected to be same, but were 'string' and 'int32'")
+		assertThat("should fail for true and 'true'", true, "true", "bool", "string")
+		assertThat("should fail for \"a\" and ''", "a", 'a', "string", "int32")
 	})
 
 	t.Run("scenarios that must not fail tests", func(t *testing.T) {
@@ -479,14 +465,14 @@ func TestHaveSameType(t *testing.T) {
 
 			should.HaveSameType(value1, value2, assumption)
 
+			if stub.hasFailed {
+				t.Error("test was expected to not fail but it did")
+			}
 			if stub.WasHelperCalled() {
 				t.Error("Helper() call was not expected")
 			}
 			if stub.logMessage != "" {
 				t.Errorf("wanted '%s' got '%s'", "", stub.logMessage)
-			}
-			if stub.errorMessage != "" {
-				t.Errorf("wanted '%s' got '%s'", "", stub.errorMessage)
 			}
 		}
 
