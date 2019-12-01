@@ -8,13 +8,12 @@ import (
 )
 
 const (
-	stringLogFormat         string = "\nassumption: [ %s ]\n    should: %s \n  expected: '%s'\n    actual: '%s'"
-	singleValueLogFormat    string = "\nassumption: [ %s ]\n    should: %s \n  expected: %s\n    actual: '%s'"
-	singleBooleanLogFormat  string = "\nassumption: [ %s ]\n    should: %s \n  expected: %s\n    actual: %t"
-	typeLogFormat           string = "\nassumption: [ %s ]\n    should: %s \n  expected: %s\n    actual: %s"
-	missingItemsLogFormat   string = "\nassumption: [ %s ]\n    should: %s \n    reason: %s\n  expected: %v\n    actual: %v\n   missing: %v"
-	lengthMismatchLogFormat string = "\nassumption: [ %s ]\n    should: %s \n    reason: %s\n  expected: %v\n    actual: %v\nlength exp: %v\nlength act: %v"
-	valuesLogFormat         string = "\nassumption: [ %s ]\n    should: %s \n    reason: %s\n  expected: %v\n    actual: %v"
+	singleValueWithTypeLogFormat string = "\n assumption: [ %s ]\n     should: %s \n   expected: %v\n     actual: %v\ntype actual: %T"
+	valuesWithTypeLogFormat      string = "\n assumption: [ %s ]\n     should: %s \n   expected: %v\n     actual: %v\ntype expect: %T\ntype actual: %T"
+	valuesLogFormat              string = "\nassumption: [ %s ]\n    should: %s \n  expected: %v\n    actual: %v"
+	missingItemsLogFormat        string = "\nassumption: [ %s ]\n    should: %s \n    reason: %s\n  expected: %v\n    actual: %v\n   missing: %v"
+	lengthMismatchLogFormat      string = "\nassumption: [ %s ]\n    should: %s \n    reason: %s\n  expected: %v\n    actual: %v\nlength exp: %v\nlength act: %v"
+	reasonLogFormat              string = "\nassumption: [ %s ]\n    should: %s \n    reason: %s\n  expected: %v\n    actual: %v"
 )
 
 // Should define easy to use methods for testing go applications.
@@ -37,7 +36,7 @@ func New(t testingT) *Should {
 func (s *Should) BeNil(value interface{}, assumption string) {
 	if !isNil(value) {
 		s.t.Helper()
-		s.t.Log(fmt.Sprintf(singleValueLogFormat, assumption, "BeNil", "nil", value))
+		s.t.Log(fmt.Sprintf(singleValueWithTypeLogFormat, assumption, "BeNil", nil, value, value))
 		s.t.Fail()
 	}
 }
@@ -46,7 +45,7 @@ func (s *Should) BeNil(value interface{}, assumption string) {
 func (s *Should) BeNotNil(value interface{}, assumption string) {
 	if isNil(value) {
 		s.t.Helper()
-		s.t.Log(fmt.Sprintf(singleValueLogFormat, assumption, "BeNotNil", "!= nil", value))
+		s.t.Log(fmt.Sprintf(valuesLogFormat, assumption, "BeNotNil", "!= nil", value))
 		s.t.Fail()
 	}
 }
@@ -55,7 +54,7 @@ func (s *Should) BeNotNil(value interface{}, assumption string) {
 func (s *Should) Error(err error, assumption string) {
 	if isNil(err) {
 		s.t.Helper()
-		s.t.Log(fmt.Sprintf(singleValueLogFormat, assumption, "Error", "!= nil", err))
+		s.t.Log(fmt.Sprintf(valuesLogFormat, assumption, "Error", "!= nil", err))
 		s.t.Fail()
 	}
 }
@@ -64,7 +63,7 @@ func (s *Should) Error(err error, assumption string) {
 func (s *Should) NotError(err error, assumption string) {
 	if !isNil(err) {
 		s.t.Helper()
-		s.t.Log(fmt.Sprintf(singleValueLogFormat, assumption, "NotError", "nil", err))
+		s.t.Log(fmt.Sprintf(valuesLogFormat, assumption, "NotError", "nil", err))
 		s.t.Fail()
 	}
 }
@@ -73,8 +72,9 @@ func (s *Should) NotError(err error, assumption string) {
 func (s *Should) BeEqual(expected, actual interface{}, assumption string) {
 	if !reflect.DeepEqual(expected, actual) {
 		s.t.Helper()
-		s.t.Log(fmt.Sprintf(stringLogFormat, assumption, "BeEqual",
-			escape(expected), escape(actual)))
+		s.t.Log(fmt.Sprintf(valuesWithTypeLogFormat, assumption, "BeEqual",
+			escape(expected), escape(actual),
+			expected, actual))
 		s.t.Fail()
 	}
 }
@@ -83,7 +83,7 @@ func (s *Should) BeEqual(expected, actual interface{}, assumption string) {
 func (s *Should) BeNotEqual(expected, actual interface{}, assumption string) {
 	if reflect.DeepEqual(expected, actual) {
 		s.t.Helper()
-		s.t.Log(fmt.Sprintf(stringLogFormat, assumption, "BeNotEqual",
+		s.t.Log(fmt.Sprintf(valuesLogFormat, assumption, "BeNotEqual",
 			escape(expected), escape(actual)))
 		s.t.Fail()
 	}
@@ -93,7 +93,7 @@ func (s *Should) BeNotEqual(expected, actual interface{}, assumption string) {
 func (s *Should) BeTrue(value bool, assumption string) {
 	if !value {
 		s.t.Helper()
-		s.t.Log(fmt.Sprintf(singleBooleanLogFormat, assumption, "BeTrue", "true", value))
+		s.t.Log(fmt.Sprintf(valuesLogFormat, assumption, "BeTrue", true, value))
 		s.t.Fail()
 	}
 }
@@ -102,7 +102,7 @@ func (s *Should) BeTrue(value bool, assumption string) {
 func (s *Should) BeFalse(value bool, assumption string) {
 	if value {
 		s.t.Helper()
-		s.t.Log(fmt.Sprintf(singleBooleanLogFormat, assumption, "BeFalse", "false", value))
+		s.t.Log(fmt.Sprintf(valuesLogFormat, assumption, "BeFalse", false, value))
 		s.t.Fail()
 	}
 }
@@ -114,7 +114,7 @@ func (s *Should) HaveSameType(expected, actual interface{}, assumption string) {
 
 	if expectedType != actualType {
 		s.t.Helper()
-		s.t.Log(fmt.Sprintf(typeLogFormat, assumption, "HaveSameType", expectedType, actualType))
+		s.t.Log(fmt.Sprintf(valuesLogFormat, assumption, "HaveSameType", expectedType, actualType))
 		s.t.Fail()
 	}
 }
@@ -125,7 +125,7 @@ func (s *Should) HaveSameItems(expected, actual interface{}, assumption string) 
 	actualType := reflect.TypeOf(actual)
 	if expectedType != actualType {
 		s.t.Helper()
-		s.t.Log(fmt.Sprintf(valuesLogFormat, assumption, "HaveSameItems", "type mismatch", expectedType, actualType))
+		s.t.Log(fmt.Sprintf(reasonLogFormat, assumption, "HaveSameItems", "type mismatch", expectedType, actualType))
 		s.t.Fail()
 		return
 	}
