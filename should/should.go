@@ -8,10 +8,13 @@ import (
 )
 
 const (
-	stringLogFormat        string = "\nassumption: [ %s ]\n    should: %s \n  expected: '%s'\n    actual: '%s'"
-	singleValueLogFormat   string = "\nassumption: [ %s ]\n    should: %s \n  expected: %s\n    actual: '%s'"
-	singleBooleanLogFormat string = "\nassumption: [ %s ]\n    should: %s \n  expected: %s\n    actual: %t"
-	typeLogFormat          string = "\nassumption: [ %s ]\n    should: %s \n  expected: %s\n    actual: %s"
+	stringLogFormat         string = "\nassumption: [ %s ]\n    should: %s \n  expected: '%s'\n    actual: '%s'"
+	singleValueLogFormat    string = "\nassumption: [ %s ]\n    should: %s \n  expected: %s\n    actual: '%s'"
+	singleBooleanLogFormat  string = "\nassumption: [ %s ]\n    should: %s \n  expected: %s\n    actual: %t"
+	typeLogFormat           string = "\nassumption: [ %s ]\n    should: %s \n  expected: %s\n    actual: %s"
+	missingItemsLogFormat   string = "\nassumption: [ %s ]\n    should: %s \n    reason: %s\n  expected: %v\n    actual: %v\n   missing: %v"
+	lengthMismatchLogFormat string = "\nassumption: [ %s ]\n    should: %s \n    reason: %s\n  expected: %v\n    actual: %v\nlength exp: %v\nlength act: %v"
+	valuesLogFormat         string = "\nassumption: [ %s ]\n    should: %s \n    reason: %s\n  expected: %v\n    actual: %v"
 )
 
 // Should define easy to use methods for testing go applications.
@@ -116,6 +119,56 @@ func (s *Should) HaveSameType(expected, actual interface{}, assumption string) {
 	}
 }
 
+// HaveSameItems compares two arrays and fails the test when they don't have the same items, regardless of the ordering.
+func (s *Should) HaveSameItems(expected, actual interface{}, assumption string) {
+	expectedType := reflect.TypeOf(expected)
+	actualType := reflect.TypeOf(actual)
+	if expectedType != actualType {
+		s.t.Helper()
+		s.t.Log(fmt.Sprintf(valuesLogFormat, assumption, "HaveSameItems", "type mismatch", expectedType, actualType))
+		s.t.Fail()
+		return
+	}
+
+	if expectedType.Kind() == reflect.Slice {
+		v1 := reflect.ValueOf(expected)
+		v2 := reflect.ValueOf(actual)
+
+		if v1.Len() != v2.Len() {
+			s.t.Helper()
+			s.t.Log(fmt.Sprintf(lengthMismatchLogFormat, assumption, "HaveSameItems", "length mismatch", v1, v2, v1.Len(), v2.Len()))
+			s.t.Fail()
+			return
+		}
+
+		missingItems := getMissingItems(v1, v2)
+		if len(missingItems) > 0 {
+			s.t.Helper()
+			s.t.Log(fmt.Sprintf(missingItemsLogFormat, assumption, "HaveSameItems", "items missing", v1, v2, missingItems))
+			s.t.Fail()
+		}
+	}
+}
+
+func getMissingItems(list1 reflect.Value, list2 reflect.Value) (items []interface{}) {
+	for i := 0; i < list1.Len(); i++ {
+		if !contains(list2, list1.Index(i)) {
+			items = append(items, list1.Index(i).Interface())
+		}
+	}
+
+	return
+}
+func contains(items reflect.Value, item reflect.Value) bool {
+	for i := 0; i < items.Len(); i++ {
+		if items.Index(i).Interface() == item.Interface() {
+			return true
+		}
+	}
+
+	return false
+}
+
 func escape(value interface{}) interface{} {
 	tmpValue, ok := value.(string)
 	if ok {
@@ -139,15 +192,4 @@ func isNil(value interface{}) bool {
 	}
 
 	return false
-}
-
-func getNotNilString(value interface{}) string {
-	t := reflect.ValueOf(value)
-	switch t.Kind() {
-	case reflect.Ptr, reflect.Slice, reflect.Map,
-		reflect.Func, reflect.Chan:
-		return fmt.Sprintf("an initialised value of type %s", t.Type())
-	}
-
-	return fmt.Sprintf("'%s'", value)
 }

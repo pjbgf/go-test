@@ -481,3 +481,62 @@ func TestHaveSameType(t *testing.T) {
 		assertThat("should not fail for []uint8{1} and []byte{1}", []uint8{1}, []byte{1})
 	})
 }
+
+func TestHaveSameItems(t *testing.T) {
+	t.Run("scenarios that must fail tests", func(t *testing.T) {
+		assertThat := func(assumption string, expected, actual interface{},
+			expectedLogMessage string) {
+			stub := testingStub{}
+			should := New(&stub)
+
+			should.HaveSameItems(expected, actual, assumption)
+
+			if !stub.hasFailed {
+				t.Error("test was expected to fail but did not")
+			}
+			if !stub.WasHelperCalled() {
+				t.Errorf("Helper() call was expected but did not happen")
+			}
+			if expectedLogMessage != stub.logMessage {
+				t.Errorf("wanted '%s' got '%s'", expectedLogMessage, stub.logMessage)
+			}
+		}
+
+		assertThat("should fail for missing item in []string",
+			[]string{"a", "b", "c"}, []string{"c", "b", "d"},
+			"\nassumption: [ should fail for missing item in []string ]\n    should: HaveSameItems \n    reason: items missing\n  expected: [a b c]\n    actual: [c b d]\n   missing: [a]")
+		assertThat("should fail for missing item in []int",
+			[]int{5, 7, 2}, []int{2, 5, 1},
+			"\nassumption: [ should fail for missing item in []int ]\n    should: HaveSameItems \n    reason: items missing\n  expected: [5 7 2]\n    actual: [2 5 1]\n   missing: [7]")
+		assertThat("should fail for different types",
+			[]int{5, 7, 2}, []string{"5", "7", "2"},
+			"\nassumption: [ should fail for different types ]\n    should: HaveSameItems \n    reason: type mismatch\n  expected: []int\n    actual: []string")
+		assertThat("should fail for different lengths",
+			[]string{"a", "b", "c"}, []string{"c", "b", "d", "a"},
+			"\nassumption: [ should fail for different lengths ]\n    should: HaveSameItems \n    reason: length mismatch\n  expected: [a b c]\n    actual: [c b d a]\nlength exp: 3\nlength act: 4")
+	})
+
+	t.Run("scenarios that must not fail tests", func(t *testing.T) {
+		assertThat := func(assumption string, expected, actual interface{}) {
+			stub := testingStub{}
+			should := New(&stub)
+
+			should.HaveSameItems(expected, actual, assumption)
+
+			if stub.hasFailed {
+				t.Error("test was expected to not fail but it did")
+			}
+			if stub.WasHelperCalled() {
+				t.Errorf("Helper() call was not expected but it did happen")
+			}
+			if stub.logMessage != "" {
+				t.Errorf("wanted '%s' got '%s'", "", stub.logMessage)
+			}
+		}
+
+		assertThat("should fail for missing item in []string",
+			[]string{"a", "b", "c"}, []string{"c", "b", "a"})
+		assertThat("should fail for missing item in []int",
+			[]int{5, 7, 2}, []int{2, 5, 7})
+	})
+}
